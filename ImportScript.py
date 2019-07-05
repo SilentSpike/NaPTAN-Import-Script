@@ -45,10 +45,11 @@ def writeOutput(path, data):
         ET.SubElement(node, "tag", k="public_transport", v="platform")
         ET.SubElement(node, "tag", k="bus", v="yes")
         # Naptan tags
-        ET.SubElement(node, "tag", k="source", v="naptan")
         ET.SubElement(node, "tag", k="naptan:verified", v="no")
         ET.SubElement(node, "tag", k="naptan:AtcoCode", v=stop["ATCOCode"])
         ET.SubElement(node, "tag", k="naptan:NaptanCode", v=stop["NaptanCode"])
+        ET.SubElement(node, "tag", k="naptan:CommonName", v=stop["CommonName"])
+        ET.SubElement(node, "tag", k="naptan:Indicator", v=stop["Indicator"])
         # Name tags
         ET.SubElement(node, "tag", k="name", v=stop["CommonName"])
         if "GaelicName" in stop:
