@@ -19,19 +19,13 @@ def addToOutput(data):
     atco = data["ATCOCode"]
     local = data["LocalityName"]
 
-    # Use "LocalityName" to split up import
-    if local not in stops_out:
-        stops_out[local] = []
-
-    # Inject any alternate language names
+    # Inject alternate names (multiple languages)
     if atco in alt_names:
-        for alt in alt_names[atco]:
-            if alt[1] == "gd":
-                data["GaelicName"] = alt[0]
-            if alt[1] == "cy":
-                data["WelshName"] = alt[0]
+        for lang in alt_names[atco]:
+            data[lang + "Name"] = ";".join(alt_names[atco][lang])
 
-    stops_out[local].append(data)
+    # Use "LocalityName" to split up import
+    stops_out.setdefault(local, []).append(data)
 
 def writeOutput(path, data):
     osm = ET.Element("osm", version="0.6",
@@ -52,10 +46,10 @@ def writeOutput(path, data):
         ET.SubElement(node, "tag", k="naptan:Indicator", v=stop["Indicator"])
         # Name tags
         ET.SubElement(node, "tag", k="name", v=stop["CommonName"])
-        if "GaelicName" in stop:
-            ET.SubElement(node, "tag", k="name:gd", v=stop["GaelicName"])
-        if "WelshName" in stop:
-            ET.SubElement(node, "tag", k="name:cy", v=stop["WelshName"])
+        if "gdName" in stop:
+            ET.SubElement(node, "tag", k="name:gd", v=stop["gdName"])
+        if "cyName" in stop:
+            ET.SubElement(node, "tag", k="name:cy", v=stop["cyName"])
 
     tree = ET.ElementTree(osm)
     tree.write(path, encoding='utf-8',
@@ -69,12 +63,12 @@ with open("NaPTANcsv/AlternativeDescriptors.csv") as csvfile:
 
     # Build dictionary
     for row in reader:
-        atco = row["AtcoCode"]
-        if atco not in alt_names:
-            alt_names[atco] = []
-
+        # Language assumed English if missing
+        lang = row["CommonNameLang"] if row["CommonNameLang"] else "en"
         # Stops can have multiple alternate names
-        alt_names[atco].append((row["CommonName"], row["CommonNameLang"]))
+        alt_names.setdefault(row["AtcoCode"], {}) \
+            .setdefault(lang, []) \
+            .append(row["CommonName"])
 
 with open("NaPTANcsv/Stops.csv") as csvfile:
     reader = csv.DictReader(csvfile)
